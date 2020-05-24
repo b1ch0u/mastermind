@@ -68,10 +68,11 @@ class ImprovedForward(ForwardChecking):
         pass
 
 
+'''
 n, p = 4, 8
-N = 20
+N = 2
 instances = [mm.generate_random_combination(n, p) for _ in range(N)]
-for cls in [GenerateAndTest, Backtracking, ForwardAllDiff]:
+for cls in [GenerateAndTest, Backtracking, ForwardAllDiff, AG, AG2, AG3]:
     print('Testing', cls, '...')
     t1 = time.time()
     res = [play_the_game(cls,
@@ -84,6 +85,7 @@ for cls in [GenerateAndTest, Backtracking, ForwardAllDiff]:
     print('std :', statistics.stdev(res))
     print('average time', total_time / N)
     print()
+'''
 
 
 ## Etudier ensuite l’évolution du temps moyen de résolution et du nombre moyen d’essais
@@ -92,10 +94,10 @@ for cls in [GenerateAndTest, Backtracking, ForwardAllDiff]:
 N_base = 20
 def evaluate_algo_over_n(cls, ax_prop, ax_times):
     avg_nb_prop, avg_times = [], []
-    n_min, n_max = 2, 7
+    n_min, n_max = 2, 6
     print('evaluating', cls)
     for n in range(n_min, n_max):
-        p = 2 * n
+        p = n + 2
         N = int(N_base / n)
         instances = [mm.generate_random_combination(n, p) for _ in range(N)]
         t1 = time.time()
@@ -114,7 +116,7 @@ fig, (ax_prop, ax_times) = plt.subplots(1, 2)
 ax_prop.set_title('Average nb of propositions')
 ax_times.set_title('Average time')
 ax_times.set_yscale('log')
-for cls in [GenerateAndTest, Backtracking, ForwardAllDiff]:
+for cls in [GenerateAndTest, Backtracking, ForwardAllDiff, AG, AG2, AG3]:
     evaluate_algo_over_n(cls, ax_prop, ax_times)
 ax_prop.legend()
 ax_times.legend()
