@@ -1,4 +1,5 @@
 import random as rd
+import mastermind as mm
 
 
 class Solver:
@@ -14,6 +15,7 @@ class Solver:
         self.sol_len = len(domains)
         self.constraints = []
         self.test_func = test_func
+        self.comb = ""
 
     def add_constraint(self, constraint):
         self.constraints.append(constraint)
@@ -21,6 +23,7 @@ class Solver:
     @classmethod
     def complete_solve(cls, domains, test_func, compare_func, comb):
         instance = cls(domains, test_func)
+        instance.comb = comb
         counter = 1
         prop, _ = instance.solve()
         while prop != comb:
@@ -103,3 +106,73 @@ class A4(Solver):
             if is_valid:
                 return comb, True
         return '', False
+
+class AG(Solver):
+    def __init__(self, domains, test_func):
+        self.pMuta = 0.8
+        super().__init__(domains,test_func)
+    def solve(self):
+        return "".join(rd.choice(mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.5,50,self.constraints))), True
+    def setPMuta(self, pMuta):
+        self.pMuta = pMuta
+    
+    
+class AG2(Solver):
+    def __init__(self, domains, test_func):
+        self.pMuta = 0.8
+        super().__init__(domains,test_func)
+    def solve(self):
+        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.5,50,self.constraints)
+        iMax=0
+        scoreMax=0
+        for i in range(len(E)):
+            score = mm.evaluate(self.constraints,E[i])
+            if score > scoreMax:
+                scoreMax = score
+                iMax = i
+        return "".join(E[i]), True
+    def setPMuta(self, pMuta):
+        self.pMuta = pMuta
+    
+class AG3(Solver):
+    def __init__(self, domains, test_func):
+        self.pMuta = 0.8
+        super().__init__(domains,test_func)
+    def solve(self):
+        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,self.pMuta,50,self.constraints)
+        iMin=0
+        scoreMin=10000
+        for i in range(len(E)):
+            score = mm.evaluate(self.constraints,E[i])
+            if score < scoreMin:
+                scoreMin = score
+                iMin = i
+        return "".join(E[i]), True
+    
+    def setPMuta(self, pMuta):
+        self.pMuta = pMuta
+        
+class AG4(Solver):
+    def __init__(self, domains, test_func):
+        self.pMuta = 0.8
+        super().__init__(domains,test_func)
+    def solve(self):
+        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,self.pMuta,50,self.constraints)
+        iBest=0
+        bestScore= 10000
+        for i in range(len(E)):
+            score=0
+            newConstraint = self.constraints.copy()
+            newConstraint.append((E[i], mm.compare_combinations(E[i], self.comb )))
+            
+            for j in range(len(E)):
+                if mm.check_constraints_satisfaction(newConstraint, E[j]):
+                    score+=1
+            if score < bestScore:
+                bestScore = score
+                iBest = i
+                    
+        return "".join(E[iBest]), True
+    
+    def setPMuta(self, pMuta):
+        self.pMuta = pMuta
