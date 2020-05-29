@@ -129,7 +129,7 @@ def evaluate_algo_over_n(cls, ax_prop, ax_times, n_min, n_max, instances_by_size
 
 
 N_base = 2 ** 6
-n_min = 1
+n_min = 2
 n_max = 7
 instances_by_size = {n : [mm.generate_random_combination(n, 2 * n)
                           for _ in range(int(N_base / (2 ** n)))]
@@ -143,7 +143,8 @@ ax_times.set_yscale('log')
 #for cls in [EnumerateAndTest, Backtracking, ForwardAllDiff]:
 #for cls in [EnumerateAndTest, Backtracking, ForwardAllDiff]:
 #for cls in [GenerateRandomAndTest, EnumerateAndTest, Backtracking, ForwardAllDiff, AG, AG2, AG3]:
-for cls in [ForwardAllDiff, ImprovedForward]:
+for cls in [ForwardAllDiff, AG, AG2, AG3]:
+#for cls in [ForwardAllDiff, ImprovedForward]:
     evaluate_algo_over_n(cls, ax_prop, ax_times,
                          n_min, n_max,
                          instances_by_size)

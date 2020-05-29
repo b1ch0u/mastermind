@@ -1,6 +1,7 @@
 import random as rd
 import itertools as it
 import copy
+import time
 
 import mastermind as mm
 
@@ -80,37 +81,40 @@ class ForwardChecking(Solver):
 
 class AG(Solver):
     def solve(self):
-        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
-        if not E:
-            return None, False
-        return "".join(rd.choice(E)), True
+        while True:
+            E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
+            if not E:
+                yield None, False
+            yield rd.choice(E), True
 
 
 class AG2(Solver):
     def solve(self):
-        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
-        if not E:
-            return '', False
-        iMax=0
-        scoreMax=0
-        for i in range(len(E)):
-            score = mm.evaluate(self.constraints,E[i])
-            if score > scoreMax:
-                scoreMax = score
-                iMax = i
-        return "".join(E[i]), True
+        while True:
+            E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
+            if not E:
+                yield '', False
+            iMax=0
+            scoreMax=0
+            for i in range(len(E)):
+                score = mm.evaluate(self.constraints,E[i])
+                if score > scoreMax:
+                    scoreMax = score
+                    iMax = i
+            yield E[i], True
 
 
 class AG3(Solver):
     def solve(self):
-        E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
-        if not E:
-            return '', False
-        iMin=0
-        scoreMin=10000
-        for i in range(len(E)):
-            score = mm.evaluate(self.constraints,E[i])
-            if score < scoreMin:
-                scoreMin = score
-                iMin = i
-        return "".join(E[i]), True
+        while True:
+            E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
+            if not E:
+                return '', False
+            iMin=0
+            scoreMin=10000
+            for i in range(len(E)):
+                score = mm.evaluate(self.constraints,E[i])
+                if score < scoreMin:
+                    scoreMin = score
+                    iMin = i
+            yield E[i], True

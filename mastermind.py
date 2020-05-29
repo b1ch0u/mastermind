@@ -177,9 +177,9 @@ def algoGenetique(n,p,N,NbG,Pm, maxSize,constraint):
             fils1, fils2 = croisement(parent1,parent2)
             #Mutation:
             if(rd.random()<Pm):
-                fils1 = mutation(fils1,COLORS[:p])
+                fils1 = mutation(fils1,list(range(p)))
             if(rd.random()<Pm):
-                fils2 = mutation(fils2,COLORS[:p])
+                fils2 = mutation(fils2,list(range(p)))
 
             #Insertion:
             Pp.append(fils1)
