@@ -17,8 +17,6 @@ def generate_domains(res_len, colors_nb):
     return [set(range(colors_nb)) for _ in range(res_len)]
 
 
-# TODO essayer autre implementation de compare_combinations
-
 def compare_combinations(comb, sol):
     '''
     Compare two combinations.
@@ -41,7 +39,6 @@ def compare_combinations(comb, sol):
     >>> compare_combinations('1124AB', 'AB1113')
     (0, 4)
     '''
-    # TODO add doc partial comparison
     correct_indices = {i for i in range(len(comb))
                        if comb[i] == sol[i]}
     comb_counter = Counter([v for i, v in enumerate(comb)

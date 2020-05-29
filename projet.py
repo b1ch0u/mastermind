@@ -4,10 +4,11 @@ Evaluate MasterMind strategies.
 
 import time
 import statistics
+import random as rd
 
 import matplotlib.pyplot as plt
 
-from solver import *  # TODO
+from solver import GenerateRandomAndTest, EnumerateAndTest, ForwardChecking, Genetic
 import mastermind as mm
 
 
@@ -15,7 +16,6 @@ import mastermind as mm
 
 
 def play_the_game(cls, n, p, comb):
-    #print('\n\nthe solution is', comb)
     domains = mm.generate_domains(n, p)
     instance = cls(domains,
                    mm.check_constraints_satisfaction)
@@ -23,12 +23,10 @@ def play_the_game(cls, n, p, comb):
     for prop, validity in instance.solve():
         if prop == comb:
             break
-        #print('one try', prop)
         if not validity:
             raise Exception(cls, 'could not find a solution :(')
         counter += 1
         instance.add_constraint((prop, mm.compare_combinations(prop, comb)))
-    #print('ok, found it')
     return counter
 
 
@@ -63,11 +61,11 @@ def compare_fixed_n(n, p, N, classes):
         print('nb of propositions'
               f'\tavg : {statistics.mean(res):.1f}'
               f'\tstd : {statistics.stdev(res):.2f}')
-        print(f'average time : {total_time / N:.3f}')
+        print(f'average time\tavg : {total_time / N:.3f}')
         print()
 
 
-compare_fixed_n(4, 8, 20,
+compare_fixed_n(4, 8, 200,
                 [GenerateRandomAndTest, EnumerateAndTest,
                  Backtracking, ForwardAllDiff])
 
@@ -111,10 +109,9 @@ def compare_over_n(n_min, n_max, N_base, classes):
     ax_prop.legend()
     ax_times.legend()
     plt.show()
-'''
-'''
 
-compare_over_n(2, 5, 2 ** 5,
+
+compare_over_n(2, 7, 2 ** 7,
                [GenerateRandomAndTest, EnumerateAndTest, Backtracking, ForwardAllDiff])
 
 ### 1.2
@@ -148,7 +145,7 @@ class ImprovedForward(ForwardChecking):
                     domain.difference_update(comb)
 
 
-compare_over_n(2, 5, 2 ** 5,
+compare_over_n(2, 7, 2 ** 7,
                [ForwardAllDiff, ImprovedForward])
 
 
@@ -178,5 +175,22 @@ class MinGenetic(Genetic):
         return min(E, key=lambda comb: mm.evaluate(constraints, comb))
 
 
-compare_over_n(2, 5, 2 ** 5,
-               [ImprovedForward, RandomGenetic, MaxGenetic, MinGenetic])
+class MinimizeRemainingGenetic(Genetic):
+    @staticmethod
+    def genetic_choice_func(E, constraints):
+        def count_eliminated_if_chosen(comb):
+            eliminated = 0
+            sample_size = max(1, int(len(E) / 3))
+            for hypotetical_solution in rd.sample(E, sample_size):
+                new_constraint= mm.compare_combinations(comb, hypotetical_solution)
+                for other_comb in rd.sample(E, sample_size):
+                    if mm.compare_combinations(comb, other_comb) != new_constraint:
+                        eliminated += 1
+            return eliminated
+        return max(E, key=count_eliminated_if_chosen)
+
+
+compare_over_n(2, 7, 2 ** 7,
+               [ImprovedForward,
+                RandomGenetic, MaxGenetic, MinGenetic,
+                MinimizeRemainingGenetic])

@@ -78,7 +78,6 @@ class ForwardChecking(Solver):
             yield None, False
 
 
-
 class Genetic(Solver):
     def solve(self):
         while True:

@@ -58,7 +58,7 @@
 	\begin{figure}[H]
 		\centering
 		\includegraphics[height=#1]{#2}
-		\caption{#3}
+		%\caption{#3}
 	\end{figure}
 }
 
@@ -97,11 +97,21 @@ Le projet est implémenté en Python. Le code est réparti en trois fichiers :
 	      \py{(nombre de pions bien places, nombre de pions mal places)}.
 	
 	\item A un instant donné du jeu, les informations obtenues dans les essais précédents sont appelées \textit{contraintes}, et représentées par des \py{tuple} de la forme \py{(combinaison, retour)}.
-	
-	\item Dans la partie 1, le domaine d'une variable sera représentée par \py{set} contenant les valeurs que peut prendre cette variable.
 \end{itemize}
 
 \section*{Approche générale}
+
+\subsection*{Implémentation de la fonction de comparaison}
+
+Notre implémentation de la fonction de comparaison de deux combinaisons, \py{compare_combinations}, se fait en deux étapes :
+
+\begin{enumerate}
+	\item Déterminer les indices qui ont la même couleur
+	
+	\item En oubliant ces indices, pour compter les "mal placés", on souhaite un conteneur qui n'ait pas d'ordre mais tienne compte des multiplicités. C'est exactement ce que fait la classe \py{Counter} du module \py{collections}. Nous n'avons plus alors qu'à compter les couleurs en commun.
+\end{enumerate}
+
+L'implémentation permet entre autre de comparer une combinaison complète avec une incomplète, ce qui facilite le code ensuite pour les algorithmes type retour arrière.
 
 \subsection*{Question 0}
 A chaque étape, la proposition d'une combinaison compatible avec les informations précédemment reçues entraîne la fin de la partie si la combinaison est la bonne, ou élimine au moins cette combinaison. 
@@ -175,15 +185,14 @@ Un Solver doit donc recevoir les paramètres suivants :
 Comme l'algorithme de forward checking ne dépend pas de la manière d'éliminer en amont des valeurs dans les domaines, la fonction \py{solve} est commune. Une classe fille n'aura qu'à implémenter une fonction membre \py{forward_func}.
 
 
-% TODO modifier en liste plutôt que str ?
-% TODO utiliser int plutôt que char ?
-
 \section*{Choix d'implémentation}
 
 \begin{itemize}
 	\item La fonction membre \py{solve} de la classe \py{Solver} ne renvoie pas une combinaison mais un \textit{générateur} (au sens pythonique) de combinaisons. Cela nous permet d'éviter de tester à nouveau des combinaisons déjà évaluées après avoir fait une proposition (si une combinaison n'était pas valide pour un certain ensemble de contraintes, elle ne sera \textit{a fortiori} pas valide avec une contrainte en plus).
 
 	\item Nous avons fait l'hypothèse que les algorithmes, à l'exception du forward checking, ne tenaient pas compte de la contrainte alldiff. A défaut, l'algorithme de backtracking et celui de forward checking ne présentaient plus qu'une différence essentiellement langagière.
+		
+	\item Le domaine d'une variable sera représentée par \py{set} contenant les valeurs que peut prendre cette variable.
 \end{itemize}
 
 
@@ -196,7 +205,7 @@ La première, \py{GenerateRandomAndTest}, génère des combinaisons aléatoireme
 
 \subsection*{Pour $n = 4$ et $p = 8$}
 
-Pour gagner un peu en précision, on effectue les tests sur un total de 2000 instances (évidemment, les mêmes pour tous les algorithmes, afin de comparer ce qui est comparable).
+Pour gagner un peu en précision, on effectue les tests sur un total de 1000 instances (évidemment, les mêmes pour tous les algorithmes, afin de comparer ce qui est comparable).
 Les résultats pour les différents algorithmes sont les suivants :
 
 \begin{verbatim}
@@ -247,7 +256,8 @@ On peut enfin être surpris de constater que l'algorithme de retour arrière chr
 
 On crée une nouvelle classe fille de \py{ForwardChecking}, qu'on nomme \py{Forward2Diff} qui fait sensiblement la même chose que \py{ForwardAllDiff} : dès qu'une valeur apparaît deux fois dans une combinaison, on l'enlève de tous les domaines restants.
 
-On modifie la fonction \py{generate_random_combination} en une fonction \py{generate_random_2_combination} qui génère une combinaison pouvant contenir (au plus) deux fois le même caractère.
+On modifie la fonction \py{generate_random_combination} en une fonction \\
+\py{generate_random_2_combination} qui génère une combinaison pouvant contenir (au plus) deux fois le même caractère.
 
 On n'effectuera cependant pas de comparaison avec \py{ForwardAllDiff} comme demandé dans le sujet car cela ne nous semble pas avoir de sens :
 
@@ -267,7 +277,20 @@ Notre méthode d'élimination repose sur la remarque suivante : \\
 
 Par exemple, si pour $n = 4$ et $p = 8$ on a testé \py{1234} et obtenu \py{(1, 1)}, alors si on cherche une solution commençant par \py{12}, les couleurs suivantes ne pourront être ni \py{1}, ni \py{2}, ni \py{3} ni \py{4}.
 
+
+\cfigure[8cm]{q13.png}{}
+
+On constate que le nombre de propositions est le même, pour la même raison qu'avec \py{Backtracking}.
+
+Les temps d'exécution sont aussi remarquablement similaires, ce qui est plus surprenant. Après avoir vérifié que les fonctions étaient correctement appelées, les domaines correctement vidés, nous concluons que le temps de calcul supplémentaire nécessaire à \py{ImprovedForward} (qui réalise bcp de comparaisons en plus) compense le temps d'exploration de branches qu'il permet d'économiser.
+
 \part*{Modélisation et résolution par algorithme génétique}
+
+\section*{Abstraitisation}
+
+Comme dans la partie 1, il nous a semblé que les algorithmes demandés partageaient une forte similarité. Nous avons donc décidé d'abstraire autant que possible le code. \\
+
+Nous implémentons une classe abstraite \py{Genetic} qui hérite de \py{Solver}. Les solveurs correspondant aux algorithmes demandés n'ont qu'à hériter de cette classe et implémenter une fonction membre \py{genetic_choice_func}, qui représente la méthode de sélection
 
 \section*{Question 2.1}
 
@@ -292,9 +315,11 @@ On peut voir sur le graphe de la prochaine question que les trois algorithmes so
 
 \subsection*{Comparaison avec la meilleure méthode la partie 1.}
 
-\cfigure[7cm]{Figure_1.png}{}
+\cfigure[8cm]{q22.png}{}
 
-On peut voir que le nombre de tentatives est sensiblement le même entre les algorithmes génétiques et le ForwardAllDiff. En revanche les algorithmes génétiques sont plus lents à trouver une solution que le ForwardAllDiff.
+On peut voir que le nombre de tentatives est sensiblement le même entre les algorithmes génétiques et le \py{ForwardAllDiff}. En revanche les algorithmes génétiques sont plus lents à trouver une solution que le \py{ForwardAllDiff}. \\
+
+L'algorithme \py{MinimizeRemainingGenetic} semble avoir un coût statique important (même pour des combinaisons très petites, on fera bcp de comparaisons), mais ne pas croitre aussi vite en temps que les autres. Malheureusement, les temps de calcul nous ont empêchés de tester cette conjecture sur de plus grandes instances.
 
 
 \end{document}
