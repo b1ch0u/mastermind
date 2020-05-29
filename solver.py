@@ -11,7 +11,6 @@ class Solver:
     Abstract, child classes should implement a `solve` method.
     '''
     forward_func = None
-    verbose = False
 
     def __init__(self, domains, check_satisfaction_func):
         '''
@@ -79,42 +78,11 @@ class ForwardChecking(Solver):
             yield None, False
 
 
-class AG(Solver):
+
+class Genetic(Solver):
     def solve(self):
         while True:
             E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
             if not E:
                 yield None, False
-            yield rd.choice(E), True
-
-
-class AG2(Solver):
-    def solve(self):
-        while True:
-            E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
-            if not E:
-                yield '', False
-            iMax=0
-            scoreMax=0
-            for i in range(len(E)):
-                score = mm.evaluate(self.constraints,E[i])
-                if score > scoreMax:
-                    scoreMax = score
-                    iMax = i
-            yield E[i], True
-
-
-class AG3(Solver):
-    def solve(self):
-        while True:
-            E = mm.algoGenetique(self.sol_len,self.sol_len*2,100,100,0.8,50,self.constraints)
-            if not E:
-                return '', False
-            iMin=0
-            scoreMin=10000
-            for i in range(len(E)):
-                score = mm.evaluate(self.constraints,E[i])
-                if score < scoreMin:
-                    scoreMin = score
-                    iMin = i
-            yield E[i], True
+            yield self.genetic_choice_func(E, self.constraints), True

@@ -181,7 +181,7 @@ Comme l'algorithme de forward checking ne dépend pas de la manière d'éliminer
 \section*{Choix d'implémentation}
 
 \begin{itemize}
-	\item La fonction membre \py{solve} de la classe \py{solver} ne renvoie pas une combinaison mais un \textit{générateur} (au sens pythonique) de combinaisons. Cela nous permet d'éviter de tester à nouveau des combinaisons déjà évaluées après avoir fait une proposition (si une combinaison n'était pas valide pour un certain ensemble de contraintes, elle ne sera \textit{a fortiori} pas valide avec une contrainte en plus).
+	\item La fonction membre \py{solve} de la classe \py{Solver} ne renvoie pas une combinaison mais un \textit{générateur} (au sens pythonique) de combinaisons. Cela nous permet d'éviter de tester à nouveau des combinaisons déjà évaluées après avoir fait une proposition (si une combinaison n'était pas valide pour un certain ensemble de contraintes, elle ne sera \textit{a fortiori} pas valide avec une contrainte en plus).
 
 	\item Nous avons fait l'hypothèse que les algorithmes, à l'exception du forward checking, ne tenaient pas compte de la contrainte alldiff. A défaut, l'algorithme de backtracking et celui de forward checking ne présentaient plus qu'une différence essentiellement langagière.
 \end{itemize}
@@ -244,6 +244,21 @@ On remarque ensuite que \textit{Enumerer et tester} et le \textit{retour arrièr
 On peut enfin être surpris de constater que l'algorithme de retour arrière chronologique fasse en moyenne plus de propositions que les algorithmes de forward checking, qui ne semblent permettre que d'éliminer (encore) plus vite des solutions. La subtilité ici est que nous avons "ajouté" au forward checking la connaissance de la contrainte alldiff, qui n'est pas dans les deux autres. L'algorithme n'explore donc qu'un espace plus petit.
 
 \section*{Question 1.2}
+
+On crée une nouvelle classe fille de \py{ForwardChecking}, qu'on nomme \py{Forward2Diff} qui fait sensiblement la même chose que \py{ForwardAllDiff} : dès qu'une valeur apparaît deux fois dans une combinaison, on l'enlève de tous les domaines restants.
+
+On modifie la fonction \py{generate_random_combination} en une fonction \py{generate_random_2_combination} qui génère une combinaison pouvant contenir (au plus) deux fois le même caractère.
+
+On n'effectuera cependant pas de comparaison avec \py{ForwardAllDiff} comme demandé dans le sujet car cela ne nous semble pas avoir de sens :
+
+\begin{itemize}
+	\item Soit on compare sur le même ensemble de combinaisons, qui satisfont la contrainte AllDiff ; \py{Forward2Diff} sera plus lent et proposera plus de combinaisons, puisqu'il parcourt un ensemble des solutions plus grand.
+	
+	\item Soit on compare sur des solutions qui n'ont pas plus de deux fois la même valeur, mais alors \py{ForwardChecking} ne trouvera pas forcément la solution.
+	
+	\item Soit on compare sur des jeux de données différents ; il va de soi que \py{Forward2Diff} proposera plus de combinaisons et sera moins rapide, mais à cause du fait qu'il répond à un problème plus "difficile" (il y a plus de possibilités à explorer).
+\end{itemize}
+
 \section*{Question 1.3}
 
 Notre méthode d'élimination repose sur la remarque suivante : \\
@@ -255,23 +270,31 @@ Par exemple, si pour $n = 4$ et $p = 8$ on a testé \py{1234} et obtenu \py{(1, 
 \part*{Modélisation et résolution par algorithme génétique}
 
 \section*{Question 2.1}
-L'algorithme génétique a été implémenter avec trois opérateurs de mutation qui sont les suivants:
+
+L'algorithme génétique a été implémenté avec trois opérateurs de mutation qui sont les suivants:
 \begin{itemize}
 	\item changement aléatoire d'un caractère
-	\item échange entre de caractère
+	\item échange entre deux caractères
 	\item inversion de la séquence de caractères entre deux positions aléatoires.
 \end{itemize}
-Pour les choix de paramètres, nous avons fixé l'ensemble E à un taille de 50, la taille de la population et le nombre de génération et 100 et la probabilité de mutation à 0.8.
+
+Pour les choix de paramètres, nous avons fixé l'ensemble $E$ à une taille de 50, la taille de la population et le nombre de générations est 100 et la probabilité de mutation à 0.8.
 
 \section*{Question 2.2}
-Les variantes AG2 et AG3 de l'algorithme génétique AG choisissent le prochain code en fonction de sa similarité avec les codes compatibles précédents, AG2 choisit donc le plus similaire et AG3 le moins similaire.
-La similarité est calculé en comparant chaque code avec tout les codes compatibles précédents, augmentant ainsi son score pour chaque caractère identique et chaque caractère présent dans le code à la mauvaise place.
-On peut voir sur le graphe de la prochaine question que les trois algorithmes sont sensiblement équivalent en nombre de tentative et en temps d'exécution. 
+
+Les variantes AG2 et AG3 de l'algorithme génétique AG choisissent le prochain code en fonction de sa similarité avec les codes compatibles précédents, AG2 choisit donc le plus similaire et AG3 le moins similaire. \\
+
+La similarité est calculée en comparant chaque code avec tout les codes compatibles précédents, augmentant ainsi son score pour chaque caractère identique et chaque caractère présent dans le code à la mauvaise place. \\
+
+On peut voir sur le graphe de la prochaine question que les trois algorithmes sont sensiblement équivalents en nombre de tentative et en temps d'exécution. 
+
 \section*{Question 2.3}
-\subsection*{Comparaison avec la meilleur méthode la partie 1.}
+
+\subsection*{Comparaison avec la meilleure méthode la partie 1.}
+
 \cfigure[7cm]{Figure_1.png}{}
 
-On peut voir que le nombre de tentative est sensiblement la même entre les algorithmes génétiques et le ForwardAllDiff. En revanche les algorithmes génétiques sont plus lents à trouver une solution que le ForwardAllDiff.
+On peut voir que le nombre de tentatives est sensiblement le même entre les algorithmes génétiques et le ForwardAllDiff. En revanche les algorithmes génétiques sont plus lents à trouver une solution que le ForwardAllDiff.
 
 
 \end{document}

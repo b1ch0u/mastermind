@@ -75,123 +75,84 @@ def check_constraints_satisfaction_and_alldiff(constraints, prop):
 
 
 def evaluate(previous, prop):
-    p = list(prop)
     score = 0
-    for e, r in previous:
-        e = list(e)
-        for i in range(len(e)):
-            if e[i] == p[i]:
-                score +=10
-            if e[i] in p:
-                score +=2
-
+    for comb, res in previous:
+        nb_common = sum(a == b for a, b in zip(comb, prop))
+        score += 4 * nb_common
     return score
 
 
 def croisement(parent1, parent2):
     i = rd.randrange(len(parent1))
-    p1=list(parent1)
-    p2=list(parent2)
-    fils1=list(parent1)
-    fils2=list(parent2)
+    p1 = list(parent1)
+    p2 = list(parent2)
+    fils1 = list(parent1)
+    fils2 = list(parent2)
     for j in range(len(fils1)):
-        if j<=i:
+        if j <= i:
             for e in p2:
                 if e not in fils1[i:]:
-                    fils1[j]=e
+                    fils1[j] = e
                     p2.remove(e)
                     break
         else:
             for e in p1:
                 if e not in fils2[:i+1]:
                     p1.remove(e)
-                    fils2[j]=e
+                    fils2[j] = e
                     break
     return fils1, fils2
 
 
 def mutation(fils, Dn):
-    fils=list(fils)
     mut = rd.randrange(3)
-    #Changement aléatoire d'un caractère
+
+    # Changement aléatoire d'un caractère
     if mut == 0:
         i = rd.randrange(len(fils))
-        e=rd.choice(Dn)
-        while e in fils:
-            e=rd.choice(Dn)
-        fils[i]=e
-        return fils
-    #échange entre deux caractères
-    elif mut == 1:
-        i = rd.randrange(len(fils))
-        j = rd.randrange(len(fils))
-        while i == j:
-            j = rd.randrange(len(fils))
-
-        tmp = fils[i]
-        fils[i]=fils[j]
-        fils[j]=tmp
+        fils[i] = rd.choice(list(set(Dn) - set(fils)))
         return fils
 
-    #inversion de la séquence entre deux caractères
-    elif mut == 2:
-        i = rd.randrange(len(fils))
-        j = rd.randrange(len(fils))
-        while i == j:
-            j = rd.randrange(len(fils))
+    i, j = rd.sample(range(len(fils)), 2)
+    i, j = min(i, j), max(i, j)
 
-        if i > j:
-            tmp = i
-            i=j
-            j=tmp
-        if i<0:
-            i==1
+    # échange entre deux caractères
+    if mut == 1:
+        fils[i], fils[j] = fils[j], fils[i]
+        return fils
 
-        #print(fils)
-        inv = fils[i:j]
-        inv.reverse()
-        r=fils[0:i] + inv + fils[j:]
-        #print(r, i,j)
-
-        return r
-    return fils
+    # inversion de la séquence entre deux caractères
+    return fils[0:i] + list(reversed(fils[i: j])) + fils[j:]
 
 
 def algoGenetique(n,p,N,NbG,Pm, maxSize,constraint):
-    P = [generate_random_combination(n,p) for i in range(N)] #Pop initial
+    P = [generate_random_combination(n, p)
+         for _ in range(N)] #Pop initial
     E = []
     #F = [0 for i in range(N)]
     t=time.time()
     k=0
-    while k < NbG or (len(E) <= 0 and time.time()-t < 300):
+    while len(E) < maxSize and k < NbG or (not E and time.time()-t < 300):
         Pp = []
 
         for i in range(int(N/2)):
 
             #Selection:
-            parent1=rd.choice(P)
-            parent2=rd.choice(P)
-            while parent1==parent2:
-                parent2=rd.choice(P)
+            parent1, parent2 = rd.sample(P, 2)
             #Croisement:
-            fils1, fils2 = croisement(parent1,parent2)
+            fils1, fils2 = croisement(parent1, parent2)
             #Mutation:
-            if(rd.random()<Pm):
-                fils1 = mutation(fils1,list(range(p)))
-            if(rd.random()<Pm):
-                fils2 = mutation(fils2,list(range(p)))
+            if(rd.random() < Pm):
+                fils1 = mutation(fils1, list(range(p)))
+            if(rd.random() < Pm):
+                fils2 = mutation(fils2, list(range(p)))
 
             #Insertion:
-            Pp.append(fils1)
-            Pp.append(fils2)
+            Pp += [fils1, fils2]
         P=Pp
 
         #On regarde dans Pp les nouvelles combinaisons compatibles
-        for e in P:
-            if check_constraints_satisfaction(constraint, e) and e not in E:
-                E.append(e)
+        E += [e for e in P if check_constraints_satisfaction(constraint, e)]
 
-        if len(E)>= maxSize:
-            break
         k+=1
     return E
