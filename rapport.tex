@@ -1,0 +1,261 @@
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{lmodern}
+
+\usepackage{amsthm, amssymb}
+
+\usepackage[most]{tcolorbox}
+
+\usepackage{minted}
+
+\usepackage{calc}  
+\usepackage{enumitem}
+
+%%%%%
+
+% remove unwanted indent after first lign of paragraphs
+\setlength{\parindent}{0in}
+
+\definecolor{codebggray}{rgb}{0.95,0.95,0.95}
+
+\tcbuselibrary{minted}
+
+\newtcblisting{pyblock}[1][]{%
+	colback=codebggray,
+	listing only,
+	minted options={
+		fontsize=\small,
+		linenos=true,
+		tabsize=4,
+		numbersep=2mm,
+		autogobble,
+	},
+	minted language=python,
+	breakable,
+	enhanced,
+	overlay={%
+		\begin{tcbclipinterior}
+			\fill[gray!25] (frame.south west) rectangle ([xshift=4mm]frame.north west);
+		\end{tcbclipinterior}
+	}
+	#1
+}
+
+\usemintedstyle{monokay}
+
+\newcommand{\py}[1]{\mintinline{python}{#1}}
+
+\newenvironment{aligneddescription}
+	{\begin{tcolorbox}
+		\begin{description}[leftmargin=!, labelwidth=\widthof{\bfseries The longest label}]	
+	}
+	{\end{description}\end{tcolorbox}}
+
+\newcommand{\cfigure}[3][6cm]{
+	\begin{figure}[H]
+		\centering
+		\includegraphics[height=#1]{#2}
+		\caption{#3}
+	\end{figure}
+}
+
+%%%%%
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\chead{Satisfaction de contraintes pour le MasterMind}
+\lfoot{Sorbonne Université}
+\rfoot{S. Julliot, K. Nartz}
+
+\begin{document}
+
+\part*{Introduction}
+
+\section*{Architecture générale}
+Le projet est implémenté en Python. Le code est réparti en trois fichiers :
+
+\begin{aligneddescription}
+	\item[\py{mastermind.py}] Fonctions permettant de simuler le jeu de mastermind (génération d'une combinaison aléatoire, comparaison de deux combinaisons, vérification de la compatibilité d'une combinaison avec les informations précédemment reçues).
+	
+	\item[\py{solver.py}] Implémentation des algorithmes de la partie 1 (engendrer et tester, retour arrière chronologique "simple", et forward checking) en classes génériques (indépendantes du problème du mastermind).
+	
+	\item[\py{projet.py}] Test des algorithmes sur le mastermind, dessin des courbes demandées, etc.
+\end{aligneddescription}
+
+\section*{Choix d'implémentation}
+
+\begin{itemize}
+	\item Chaque couleur est représentée par un nombre
+	
+	\item Une combinaison est représentée par une liste de couleurs.
+	
+	\item Le "retour" d'une combinaison est représenté par un \py{tuple} de la forme \\
+	      \py{(nombre de pions bien places, nombre de pions mal places)}.
+	
+	\item A un instant donné du jeu, les informations obtenues dans les essais précédents sont appelées \textit{contraintes}, et représentées par des \py{tuple} de la forme \py{(combinaison, retour)}.
+	
+	\item Dans la partie 1, le domaine d'une variable sera représentée par \py{set} contenant les valeurs que peut prendre cette variable.
+\end{itemize}
+
+\section*{Approche générale}
+
+\subsection*{Question 0}
+A chaque étape, la proposition d'une combinaison compatible avec les informations précédemment reçues entraîne la fin de la partie si la combinaison est la bonne, ou élimine au moins cette combinaison. 
+
+Or l'ensemble $S_{n, p}$ des combinaisons possibles à $n$ caractères parmi $p$ est une partie de $D_p^n$, qui est un ensemble fini, donc est lui-même fini.
+
+L'algorithme termine donc (en moins de $\#S_{n, p}$ étapes).
+
+
+
+\part*{Modélisation et résolution par CSP}
+
+\section*{Abstraitisation}
+
+Les algorithmes de cette section, réunis dans \py{solver.py}, se veulent génériques, en le sens que leur implémentation ne suppose aucune connaissance préalable du problème à résoudre. En particulier, aucune hypothèse n'est faite sur la forme des domaines des variables ou des contraintes. \\
+
+Par ailleurs, nous remarquons que tous les algorithmes demandés peuvent en fait être rangés seulement en deux "catégories" :
+
+\begin{itemize}
+	\item \textit{Engendrer et Tester}.
+	
+	\item \textit{Retour arrière chronologique}, et \textit{Forward checking} avec différentes méthode de simplification des domaines.
+\end{itemize}
+
+En effet, on peut voir l'algorithme de retour arrière chronologique comme un forward checking dans lequel on n'élimine aucune variable des domaines restants, et l'algorithme de forward checking lui-même ne dépend pas de la méthode d'élimination des variables, donc A2, A3, A4 et A5 peuvent être considérés comme le même algorithme. \\
+
+\section*{Hiérarchie des solveurs}
+
+Pour ne pas répéter du code, nous définissons une classe abstraite \py{Solver}, de laquelle héritera une classe par algorithme. \\
+
+Nous définissons ensuite les classes \py{GenerateRandomAndTest} et \py{EnumerateAndTest} qui implémentent l'algorithme \textit{Engendrer et Tester} (cf. question 1), ainsi qu'une classe abstraite \py{ForwardChecking}, de laquelle hériteront \py{Backtracking}, \py{ForwardAllDiff}, \py{Forward2Diff} et \py{ImprovedForward} (respectivement A2, A3, A4 et A5 dans le sujet). \\
+
+L'architecture peut donc être résumée par la figure suivante :
+
+\begin{pyblock}
+Solver
+|
+|--- GenerateRandomAndTest
+|
+|--- EnumerateAndTest
+|
+|--- ForwardChecking
+	 |
+	 |--- Backtracking
+	 |
+	 |--- ForwardAllDiff
+	 |
+	 |--- Forward2Diff
+	 |
+	 |--- ImprovedForward
+\end{pyblock}
+
+\subsection*{\py{Solver}}
+
+De part la volonté de généralité que nous nous sommes imposée, afin de résoudre le problème, il est nécessaire de fournir une fonction déterminant si une assignation (potentiellement partielle) satisfait les contraintes. \\
+
+Un Solver doit donc recevoir les paramètres suivants :
+
+\begin{aligneddescription}
+	\item[\py{domains}] La liste des domaines des variables (sous forme de \py{set}).
+	
+	\item[\py{check_satisfaction_func}] Fonction prenant en paramètre une liste de contraintes et une combinaison.
+	
+	Détermine si la combinaison satisfait toutes les contraintes .
+\end{aligneddescription}
+
+\subparagraph*{Remarque :} La combinaison à trouver n'est évidemment pas donnée à la classe solver, même si cela pourrait potentiellement alléger certaines syntaxe, afin d'écarter tout "soupçon".
+
+\subsection*{\py{ForwardChecking}}
+
+Comme l'algorithme de forward checking ne dépend pas de la manière d'éliminer en amont des valeurs dans les domaines, la fonction \py{solve} est commune. Une classe fille n'aura qu'à implémenter une fonction membre \py{forward_func}.
+
+
+% TODO modifier en liste plutôt que str ?
+% TODO utiliser int plutôt que char ?
+
+\section*{Choix d'implémentation}
+
+\begin{itemize}
+	\item La fonction membre \py{solve} de la classe \py{solver} ne renvoie pas une combinaison mais un \textit{générateur} (au sens pythonique) de combinaisons. Cela nous permet d'éviter de tester à nouveau des combinaisons déjà évaluées après avoir fait une proposition (si une combinaison n'était pas valide pour un certain ensemble de contraintes, elle ne sera \textit{a fortiori} pas valide avec une contrainte en plus).
+
+	\item Nous avons fait l'hypothèse que les algorithmes, à l'exception du forward checking, ne tenaient pas compte de la contrainte alldiff. A défaut, l'algorithme de backtracking et celui de forward checking ne présentaient plus qu'une différence essentiellement langagière.
+\end{itemize}
+
+
+
+\section*{Question 1.1}
+
+Nous proposons deux versions pour l'algorithme \textit{engendrer et tester}.
+
+La première, \py{GenerateRandomAndTest}, génère des combinaisons aléatoirement jusqu'à en trouver une satisfaisant les contraintes. La seconde, \py{EnumerateAndTest}, énumère toutes les combinaisons jusqu'à en trouver une satisfaisante. \\
+
+\subsection*{Pour $n = 4$ et $p = 8$}
+
+Pour gagner un peu en précision, on effectue les tests sur un total de 2000 instances (évidemment, les mêmes pour tous les algorithmes, afin de comparer ce qui est comparable).
+Les résultats pour les différents algorithmes sont les suivants :
+
+\begin{verbatim}
+Testing <class 'solver.GenerateRandomAndTest'> (N = 1000)
+nb of propositions
+avg : 5.5
+std : 1.04
+average time : 0.081
+
+Testing <class 'solver.EnumerateAndTest'> (N = 1000)
+nb of propositions
+avg : 7.5
+std : 1.02
+average time : 0.040
+
+Testing <class '__main__.Backtracking'> (N = 1000)
+nb of propositions
+avg : 7.5
+std : 1.02
+average time : 0.019
+
+Testing <class '__main__.ForwardAllDiff'> (N = 1000)
+nb of propositions
+avg : 4.9
+std : 0.95
+average time : 0.006
+\end{verbatim}
+
+\subsection*{En faisant varier $n$ et $p$}
+
+Nous nous sommes restreints comme proposé à $p = 2n$. De plus, comme \py{GenrateRandomAndTest} était clairement la plus longue, nous l'avons exclue de ce graphique. \\
+
+Le graphe des temps est en ordonnée logarithmique.
+
+\cfigure[7cm]{Figure_4.png}{}
+
+\subsection*{Analyse des résultats}
+
+\paragraph*{Nombre de propositions}
+
+On remarque tout d'abord que la génération aléatoire semble faire moins de propositions que l'énumération. Cette mesure est surprenante, mais ne semble pas totalement dénuée de sens ; On peut en effet supposer que faire des propositions aléatoires (mais respectant toujours les contraintes) introduira plus de "diversité" dans les combinaisons proposées, permettant ainsi de réduire plus rapidement l'espace des solutions. \\
+
+On remarque ensuite que \textit{Enumerer et tester} et le \textit{retour arrière chronologiques} proposent exactement le même nombre de combinaisons. Cela n'est pas étonnant, puisque le retour arrière chronologique permet seulement d'éliminer plus vite des portions de l'espace des solutions, mais n'ajoute aucune "logique". \\
+
+On peut enfin être surpris de constater que l'algorithme de retour arrière chronologique fasse en moyenne plus de propositions que les algorithmes de forward checking, qui ne semblent permettre que d'éliminer (encore) plus vite des solutions. La subtilité ici est que nous avons "ajouté" au forward checking la connaissance de la contrainte alldiff, qui n'est pas dans les deux autres. L'algorithme n'explore donc qu'un espace plus petit.
+
+\section*{Question 1.2}
+\section*{Question 1.3}
+
+Notre méthode d'élimination repose sur la remarque suivante : \\
+
+\textit{Le nombre de couleurs en commun (bien ou mal placées) entre la bonne combinaison et un essai est égal au nombre de couleurs bien placées plus le nombre de couleurs mal placées}. \\
+
+Par exemple, si pour $n = 4$ et $p = 8$ on a testé \py{1234} et obtenu \py{(1, 1)}, alors si on cherche une solution commençant par \py{12}, les couleurs suivantes ne pourront être ni \py{1}, ni \py{2}, ni \py{3} ni \py{4}.
+
+\part*{Modélisation et résolution par algorithme génétique}
+
+\section*{Question 2.1}
+\section*{Question 2.2}
+\section*{Question 2.3}
+
+\end{document}

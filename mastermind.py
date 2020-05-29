@@ -3,23 +3,21 @@ import time
 from collections import Counter
 
 
-COLORS = ('0123456789'
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-
-
 def generate_random_combination(n, p):
-    return ''.join(rd.sample(COLORS[:p], n))
+    return rd.sample(range(p), n)
 
 
 def generate_random_2_combination(n, p):
-    s1 = rd.sample(COLORS[:p], n)
-    s2 = rd.sample(COLORS[:p], n)
-    return ''.join(rd.choice(t) for t in zip(s1, s2))
+    s1 = rd.sample(range(p), n)
+    s2 = rd.sample(range(p), n)
+    return list(rd.choice(t) for t in zip(s1, s2))
 
 
 def generate_domains(res_len, colors_nb):
-    return [set(COLORS[:colors_nb]) for _ in range(res_len)]
+    return [set(range(colors_nb)) for _ in range(res_len)]
 
+
+# TODO essayer autre implementation de compare_combinations
 
 def compare_combinations(comb, sol):
     '''
@@ -66,7 +64,6 @@ def check_constraints_satisfaction(constraints, prop):
         comparison = compare_combinations(prop, comb)
         if comparison[0] > res[0] \
                 or comparison[1] > res[1]:
-                #or len(comb) - sum(res) > len(prop) - sum(comparison):
             return False
     return True
 
@@ -170,7 +167,6 @@ def algoGenetique(n,p,N,NbG,Pm, maxSize,constraint):
         Pp = []
 
         for i in range(int(N/2)):
-
 
             #Selection:
             parent1=rd.choice(P)
