@@ -248,14 +248,30 @@ On peut enfin être surpris de constater que l'algorithme de retour arrière chr
 
 Notre méthode d'élimination repose sur la remarque suivante : \\
 
-\textit{Le nombre de couleurs en commun (bien ou mal placées) entre la bonne combinaison et un essai est égal au nombre de couleurs bien placées plus le nombre de couleurs mal placées}. \\
+\textit{Le nombre de couleurs en commun (bien ou mal placées) entre la bonne combinaison et un essai est égal au nombre de couleurs bien placées plus le nombre de couleurs mal placées}. \\
 
 Par exemple, si pour $n = 4$ et $p = 8$ on a testé \py{1234} et obtenu \py{(1, 1)}, alors si on cherche une solution commençant par \py{12}, les couleurs suivantes ne pourront être ni \py{1}, ni \py{2}, ni \py{3} ni \py{4}.
 
 \part*{Modélisation et résolution par algorithme génétique}
 
 \section*{Question 2.1}
+L'algorithme génétique a été implémenter avec trois opérateurs de mutation qui sont les suivants:
+\begin{itemize}
+	\item changement aléatoire d'un caractère
+	\item échange entre de caractère
+	\item inversion de la séquence de caractères entre deux positions aléatoires.
+\end{itemize}
+Pour les choix de paramètres, nous avons fixé l'ensemble E à un taille de 50, la taille de la population et le nombre de génération et 100 et la probabilité de mutation à 0.8.
+
 \section*{Question 2.2}
+Les variantes AG2 et AG3 de l'algorithme génétique AG choisissent le prochain code en fonction de sa similarité avec les codes compatibles précédents, AG2 choisit donc le plus similaire et AG3 le moins similaire.
+La similarité est calculé en comparant chaque code avec tout les codes compatibles précédents, augmentant ainsi son score pour chaque caractère identique et chaque caractère présent dans le code à la mauvaise place.
+On peut voir sur le graphe de la prochaine question que les trois algorithmes sont sensiblement équivalent en nombre de tentative et en temps d'exécution. 
 \section*{Question 2.3}
+\subsection*{Comparaison avec la meilleur méthode la partie 1.}
+\cfigure[7cm]{Figure_1.png}{}
+
+On peut voir que le nombre de tentative est sensiblement la même entre les algorithmes génétiques et le ForwardAllDiff. En revanche les algorithmes génétiques sont plus lents à trouver une solution que le ForwardAllDiff.
+
 
 \end{document}
